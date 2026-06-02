@@ -238,6 +238,25 @@ body.board-mode .lcard{padding:26px;}
 .board-head .sub{font-family:'Oswald',sans-serif; letter-spacing:.18em; color:var(--jci); font-size:14px;}
 .board-exit{position:fixed; right:16px; bottom:16px; z-index:80;}
 
+/* ---------- 密碼對話框 ---------- */
+.modal-overlay{ position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center;
+  background:rgba(3,16,30,.72); backdrop-filter:blur(5px); }
+.modal-overlay.show{ display:flex; animation:mfade .18s ease; }
+@keyframes mfade{ from{opacity:0;} to{opacity:1;} }
+.modal{ width:min(380px,92vw); background:linear-gradient(160deg,var(--bg-2),var(--panel));
+  border:1px solid var(--line-2); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 22px 20px; }
+.modal h3{ font-family:'Noto Sans TC','Oswald',sans-serif; font-weight:900; font-size:19px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.modal .m-sub{ font-size:13px; color:var(--muted); margin-bottom:15px; line-height:1.5; }
+.modal input[type=password]{ width:100%; font-family:'Oswald',sans-serif; font-size:24px; letter-spacing:.35em;
+  text-align:center; color:var(--text); background:rgba(0,0,0,.32); border:1px solid var(--line-2);
+  border-radius:10px; padding:12px 10px; }
+.modal input[type=password]:focus{ outline:none; border-color:var(--jci); }
+.modal .m-hint{ font-size:12.5px; color:var(--accent-2); margin-top:9px; }
+.modal .m-err{ font-size:12.5px; color:var(--live); margin-top:7px; min-height:1.1em; }
+.modal .m-actions{ display:flex; gap:10px; margin-top:16px; }
+.modal .m-actions .btn{ flex:1; text-align:center; padding:11px; }
+.modal .m-actions .btn.go{ background:rgba(0,156,222,.16); border-color:rgba(0,156,222,.5); color:var(--jci); }
+
 @media(max-width:520px){
   .live-grid,.admin-grid,.sched-grid{grid-template-columns:1fr;}
   .evt-title{font-size:19px;}
@@ -379,6 +398,20 @@ body.board-mode .lcard{padding:26px;}
 
 <button class="btn board-exit hidden" id="boardExit" onclick="location.hash=''; location.reload();">離開大螢幕</button>
 
+<div class="modal-overlay" id="pwdModal" onclick="if(event.target===this) pwdCancel()">
+  <div class="modal">
+    <h3>🔒 需要密碼</h3>
+    <div class="m-sub" id="pwdAction">請輸入密碼以繼續</div>
+    <input type="password" id="pwdInput" inputmode="numeric" autocomplete="off" placeholder="••••">
+    <div class="m-hint">提示：子墉車牌</div>
+    <div class="m-err" id="pwdErr"></div>
+    <div class="m-actions">
+      <button class="btn" onclick="pwdCancel()">取消</button>
+      <button class="btn go" onclick="pwdConfirm()">確認</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============ 設定 ============ */
 const STORAGE_KEY = 'vb_jci_tournament_v1';
@@ -460,8 +493,8 @@ function addPoint(id,side,delta){ const m=find(id); if(!m||m.status!==1) return;
   if(side==='home') cs.home=Math.max(0,cs.home+delta); else cs.away=Math.max(0,cs.away+delta);
   evaluate(m); commit(); }
 function finishMatch(id){ const m=find(id); if(!m) return; m.status=2; commit(); }
-function resetMatch(id){ const m=find(id); if(!m) return;
-  if(!confirm('確定要重設整場比賽？所有比分會清空。')) return;
+async function resetMatch(id){ const m=find(id); if(!m) return;
+  if(!(await askPassword('重設這場比賽，將清空所有比分。'))) return;
   m.sets=[]; m.currentSet=0; m.status=0; commit(); }
 function renameTeam(tid,name){ const t=state.teams.find(x=>x.id===tid); if(t && name.trim()) t.name=name.trim(); commit(); }
 
@@ -516,8 +549,8 @@ function seedBracket(){
   [1005,1006,1007].forEach(id=>pair(id,null,null));
   commit();
 }
-function clearBracket(){
-  if(!confirm('清除整個對戰樹？')) return;
+async function clearBracket(){
+  if(!(await askPassword('清除整個對戰樹。'))) return;
   [1001,1002,1003,1004,1005,1006,1007].forEach(id=>{ const m=koOf(id); m.homeId=null; m.awayId=null; m.sets=[]; m.currentSet=0; m.status=0; });
   commit();
 }
@@ -781,10 +814,38 @@ function importJSON(file){
     catch(e){ alert('讀取失敗：'+e.message); } };
   r.readAsText(file,'utf-8');
 }
-function resetAll(){
-  if(!confirm('確定要清除全部資料、重新產生 16 隊預設賽程？此動作無法復原（建議先匯出備份）。')) return;
+async function resetAll(){
+  if(!(await askPassword('清除全部資料並重新產生 16 隊預設賽程，此動作無法復原（建議先匯出備份）。'))) return;
   const keepBrand=state.brand; state=seed(); state.brand=keepBrand||defaultBrand(); commit();
 }
+
+/* ============ 密碼保護（重設類動作） ============ */
+const RESET_PWD='5859';
+let _pwdResolve=null;
+function askPassword(actionText){
+  return new Promise(resolve=>{
+    _pwdResolve=resolve;
+    document.getElementById('pwdAction').textContent=actionText||'請輸入密碼以繼續';
+    document.getElementById('pwdErr').textContent='';
+    const inp=document.getElementById('pwdInput'); inp.value='';
+    document.getElementById('pwdModal').classList.add('show');
+    setTimeout(()=>inp.focus(), 50);
+  });
+}
+function _pwdClose(result){
+  document.getElementById('pwdModal').classList.remove('show');
+  const r=_pwdResolve; _pwdResolve=null; if(r) r(result);
+}
+function pwdConfirm(){
+  const inp=document.getElementById('pwdInput');
+  if(inp.value.trim()===RESET_PWD){ _pwdClose(true); }
+  else { document.getElementById('pwdErr').textContent='密碼錯誤，請再試一次。'; inp.value=''; inp.focus(); }
+}
+function pwdCancel(){ _pwdClose(false); }
+document.getElementById('pwdInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ e.preventDefault(); pwdConfirm(); }
+  else if(e.key==='Escape'){ e.preventDefault(); pwdCancel(); }
+});
 
 /* ============ 大螢幕模式 ============ */
 function openBoard(){ window.open(location.pathname + '#board', '_blank'); }
