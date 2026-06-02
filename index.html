@@ -157,9 +157,61 @@ body::before{
 .filter.active{color:#fff; border-color:var(--jci);}
 .hint{font-size:12.5px; color:var(--muted); margin-top:10px; line-height:1.7;}
 .hidden{display:none !important;}
+.badge.ko{color:var(--gold); border-color:rgba(255,210,74,.45);}
+
+/* ---------- 對戰樹 ---------- */
+.bracket-tools{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 14px;}
+.bracket-tools .hint{margin:0;}
+.bracket{position:relative; overflow-x:auto; padding:6px 2px 26px;}
+.rounds{position:relative; display:inline-block; min-width:100%;}
+.bracket-lines{position:absolute; inset:0; pointer-events:none; z-index:0;}
+.bracket-lines path{fill:none; stroke:var(--jci); stroke-width:2; opacity:.5;}
+.cols{position:relative; z-index:1; display:flex; gap:46px; align-items:stretch; min-height:520px;}
+.ko-round{display:flex; flex-direction:column; min-width:206px;}
+.ko-rlabel{font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.16em; font-size:12px; color:var(--muted);
+  text-align:center; text-transform:uppercase; margin-bottom:10px; flex:none;}
+.ko-col{flex:1; display:flex; flex-direction:column; justify-content:space-around; gap:14px;}
+.ko-match{background:linear-gradient(160deg,var(--bg-2),var(--panel)); border:1px solid var(--line); border-radius:12px;
+  padding:10px 12px; box-shadow:0 8px 22px rgba(0,0,0,.35); position:relative;}
+.ko-match.live{border-color:rgba(255,59,92,.55);}
+.ko-match.done{border-color:rgba(255,210,74,.4);}
+.ko-match.champ{background:linear-gradient(160deg, rgba(255,210,74,.20), var(--panel)); border-color:var(--gold);
+  display:flex; flex-direction:column; justify-content:center;}
+.ko-head{font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.08em; color:var(--jci); margin-bottom:6px; text-transform:uppercase;}
+.ko-match.champ .ko-head{color:var(--gold);}
+.ko-row{display:flex; align-items:center; gap:8px; padding:5px 0;}
+.ko-row+.ko-row{border-top:1px dashed var(--line);}
+.ko-nm{font-family:'Oswald','Noto Sans TC',sans-serif; font-weight:600; font-size:15px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ko-row.win .ko-nm{color:var(--gold);}
+.ko-sets{font-family:'Oswald',sans-serif; font-weight:700; font-size:17px; color:var(--text); min-width:18px; text-align:right;}
+.tbd{color:var(--muted); font-style:italic; font-weight:500;}
+.ko-ctrl{margin-top:8px; padding-top:8px; border-top:1px solid var(--line);}
+.ko-act{padding:6px 10px; font-size:12px; width:100%;}
+.ko-live{display:flex; flex-direction:column; gap:6px;}
+.ko-step{display:flex; align-items:center; gap:6px; justify-content:space-between;}
+.kbtn{width:30px; height:30px; border-radius:8px; border:1px solid var(--line-2); background:var(--bg-3); color:var(--text);
+  font-size:16px; font-weight:700; cursor:pointer; transition:.12s;}
+.kbtn:hover{border-color:var(--jci); color:var(--jci);}
+.kpt{font-family:'Oswald',sans-serif; font-weight:700; font-size:20px; min-width:30px; text-align:center;}
+
+/* ---------- 分數翻頁特效 ---------- */
+.flip{ display:inline-block; perspective:360px; }
+.flip>.flip-val{ display:inline-block; transform-origin:50% 50%; backface-visibility:hidden; }
+.flip.flip-go>.flip-val{ animation:flipNum .46s cubic-bezier(.2,.66,.3,1); }
+@keyframes flipNum{
+  0%{ transform:rotateX(0deg); }
+  49%{ transform:rotateX(-90deg); opacity:.25; }
+  50%{ transform:rotateX(90deg); opacity:.25; }
+  100%{ transform:rotateX(0deg); opacity:1; }
+}
+/* 即時比數的大分數加上翻牌卡片質感 */
+.tscore .flip{ position:relative; }
+.tscore.cur .flip-val{ padding:0 2px; }
+@media (prefers-reduced-motion: reduce){ .flip.flip-go>.flip-val{ animation:none; } }
+@media(max-width:520px){ .cols{gap:30px;} .ko-round{min-width:168px;} }
 
 /* 大螢幕模式 */
-body.board-mode .topbar, body.board-mode .tabs, body.board-mode #view-admin,
+body.board-mode .topbar, body.board-mode .tabs, body.board-mode #view-admin, body.board-mode #view-bracket,
 body.board-mode #schedule-wrap, body.board-mode .board-hide{display:none !important;}
 body.board-mode .wrap{max-width:1500px; padding-top:26px;}
 body.board-mode .board-head{display:flex !important;}
@@ -253,6 +305,10 @@ body.board-mode .lcard{padding:26px;}
       <svg class="vb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 2c-4 5-4 15 0 20"/><path d="M12 2c4 5 4 15 0 20"/><path d="M2.5 9c5 2 14 2 19 0"/></svg>
       計分板
     </div>
+    <div class="tab" data-tab="bracket" onclick="switchTab('bracket')">
+      <svg class="vb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 4h6v6"/><path d="M3 14h6v6"/><path d="M9 7h5v10h5"/><path d="M19 17v-4"/></svg>
+      對戰樹
+    </div>
     <div class="tab" data-tab="admin" onclick="switchTab('admin')">後台計分</div>
   </div>
 
@@ -266,6 +322,29 @@ body.board-mode .lcard{padding:26px;}
       <div class="section-title">完整賽程</div>
       <div id="schedule"></div>
     </div>
+  </section>
+
+  <section id="view-bracket" class="hidden">
+    <div class="section-title">
+      <svg class="vb" viewBox="0 0 24 24" fill="none" stroke="var(--jci)" stroke-width="1.8"><path d="M3 4h6v6"/><path d="M3 14h6v6"/><path d="M9 7h5v10h5"/></svg>
+      淘汰賽對戰樹
+    </div>
+    <div class="bracket-tools">
+      <button class="btn go" onclick="seedBracket()">依小組排名自動編排</button>
+      <button class="btn warn" onclick="clearBracket()">清除對戰樹</button>
+      <span id="bracketHint" class="hint"></span>
+    </div>
+    <div class="bracket" id="bracket">
+      <div class="rounds" id="bracketRounds">
+        <svg class="bracket-lines" id="bracketLines"></svg>
+        <div class="cols" id="bracketCols"></div>
+      </div>
+    </div>
+    <p class="hint">
+      四組各取前兩名共 8 隊進入八強，交叉編排（A1–B2、C1–D2、B1–A2、D1–C2）。
+      每場勝隊自動晉級下一輪。淘汰賽同樣是五局三勝，可直接在節點上開始、加減分、結束。
+      排名依「勝場 → 局數差 → 得分差」計算，建議小組賽全部打完再按「自動編排」。
+    </p>
   </section>
 
   <section id="view-admin" class="hidden">
@@ -305,6 +384,11 @@ function roundRobin(ids){
   return res;
 }
 function defaultBrand(){ return { title:'青商盃排球錦標賽', subtitle:'JCI VOLLEYBALL CUP · 青年商會', logo:'' }; }
+function koSkeleton(){
+  const mk=(id,round,slot)=>({id, stage:'ko', round, slot, homeId:null, awayId:null, status:0, sets:[], currentSet:0});
+  return [ mk(1001,'QF',1), mk(1002,'QF',2), mk(1003,'QF',3), mk(1004,'QF',4),
+           mk(1005,'SF',1), mk(1006,'SF',2), mk(1007,'F',1) ];
+}
 function seed(){
   const groups=['A','B','C','D'], teams=[]; let id=1;
   for(const g of groups) for(let n=1;n<=4;n++){ teams.push({id, name:`${g} 組 第 ${n} 隊`, group:g}); id++; }
@@ -312,23 +396,26 @@ function seed(){
   for(const g of groups){
     const ids=teams.filter(t=>t.group===g).map(t=>t.id);
     for(const [round,home,away] of roundRobin(ids)){
-      matches.push({id:mid, homeId:home, awayId:away, group:g, court:`場地 ${court%2+1}`, time:`第 ${round} 輪`, status:0, sets:[], currentSet:0});
+      matches.push({id:mid, stage:'group', homeId:home, awayId:away, group:g, court:`場地 ${court%2+1}`, time:`第 ${round} 輪`, status:0, sets:[], currentSet:0});
       mid++; court++;
     }
   }
-  return {brand:defaultBrand(), teams, matches};
+  return {brand:defaultBrand(), teams, matches:[...matches, ...koSkeleton()]};
 }
 function load(){
   try{ const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return null;
     const d=JSON.parse(raw);
     if(d&&Array.isArray(d.teams)&&Array.isArray(d.matches)&&d.teams.length&&d.matches.length){
       if(!d.brand) d.brand=defaultBrand();
+      d.matches.forEach(m=>{ if(!m.stage) m.stage='group'; });
+      if(!d.matches.some(m=>m.stage==='ko')) d.matches.push(...koSkeleton());
       return d;
     } }catch(e){}
   return null;
 }
 let state = load() || seed();
 function commit(){
+  syncBracket();
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ alert('儲存失敗（可能是會徽圖片太大）：'+e.message); }
   if(channel) channel.postMessage('updated');
   render();
@@ -365,6 +452,127 @@ function resetMatch(id){ const m=find(id); if(!m) return;
   m.sets=[]; m.currentSet=0; m.status=0; commit(); }
 function renameTeam(tid,name){ const t=state.teams.find(x=>x.id===tid); if(t && name.trim()) t.name=name.trim(); commit(); }
 
+/* ============ 淘汰賽對戰樹 ============ */
+const roundCN = { QF:'八強', SF:'四強', F:'冠軍戰' };
+function labelOf(m){ return m.stage==='ko' ? (roundCN[m.round]||'淘汰賽') : `${m.group} 組`; }
+const koOf = id => state.matches.find(m=>m.id===id);
+function koWinner(m){ if(!m||m.status!==2) return null; let h=0,a=0;
+  m.sets.forEach(s=>{ if(s.finished){ if(s.home>s.away)h++; else a++; } }); return h>a?m.homeId:m.awayId; }
+
+function groupTeamIds(g){ return state.teams.filter(t=>t.group===g).map(t=>t.id); }
+function standings(g){
+  const ids=groupTeamIds(g); const st={};
+  ids.forEach(id=>st[id]={id,mw:0,sw:0,sl:0,pw:0,pl:0});
+  state.matches.filter(m=>m.stage!=='ko' && m.group===g && m.status===2).forEach(m=>{
+    let hsw=0,asw=0,hpw=0,apw=0;
+    m.sets.forEach(s=>{ if(s.finished){ if(s.home>s.away)hsw++; else asw++; } hpw+=s.home; apw+=s.away; });
+    const h=st[m.homeId], a=st[m.awayId]; if(!h||!a) return;
+    h.sw+=hsw; h.sl+=asw; h.pw+=hpw; h.pl+=apw;
+    a.sw+=asw; a.sl+=hsw; a.pw+=apw; a.pl+=hpw;
+    if(hsw>asw) h.mw++; else a.mw++;
+  });
+  return ids.map(id=>st[id]).sort((x,y)=> y.mw-x.mw || (y.sw-y.sl)-(x.sw-x.sl) || (y.pw-y.pl)-(x.pw-x.pl) || x.id-y.id);
+}
+function groupComplete(){ return state.matches.filter(m=>m.stage!=='ko').every(m=>m.status===2); }
+
+// 依上一輪勝隊回填四強 / 冠軍戰；上游被重設時自動清空下游
+function syncBracket(){
+  const setSlot=(id,side,val)=>{ const m=koOf(id); if(!m) return; const key=side+'Id';
+    const cur=m[key]; if(cur===val) return;
+    const wasReal = cur!=null, nowReal = val!=null;
+    // 只有「勝隊改變」或「上游變回未決」時才清空下游已進行的比賽；首次填入不重設
+    if((wasReal && nowReal && cur!==val) || (wasReal && !nowReal)){
+      if(m.sets.length||m.status!==0){ m.sets=[]; m.currentSet=0; m.status=0; }
+    }
+    m[key]=val;
+  };
+  const w=id=>koWinner(koOf(id));
+  setSlot(1005,'home',w(1001)); setSlot(1005,'away',w(1002));
+  setSlot(1006,'home',w(1003)); setSlot(1006,'away',w(1004));
+  setSlot(1007,'home',w(1005)); setSlot(1007,'away',w(1006));
+}
+function seedBracket(){
+  if(!confirm('依目前各組排名自動編排八強對戰樹？（會覆蓋現有淘汰賽賽程）')) return;
+  const A=standings('A'), B=standings('B'), C=standings('C'), D=standings('D');
+  const g=(arr,i)=> arr[i] ? arr[i].id : null;
+  const pair=(id,h,a)=>{ const m=koOf(id); m.homeId=h; m.awayId=a; m.sets=[]; m.currentSet=0; m.status=0; };
+  pair(1001, g(A,0), g(B,1));
+  pair(1002, g(C,0), g(D,1));
+  pair(1003, g(B,0), g(A,1));
+  pair(1004, g(D,0), g(C,1));
+  [1005,1006,1007].forEach(id=>pair(id,null,null));
+  commit();
+}
+function clearBracket(){
+  if(!confirm('清除整個對戰樹？')) return;
+  [1001,1002,1003,1004,1005,1006,1007].forEach(id=>{ const m=koOf(id); m.homeId=null; m.awayId=null; m.sets=[]; m.currentSet=0; m.status=0; });
+  commit();
+}
+
+function koStepper(m,side,val){
+  return `<div class="ko-step">
+    <button class="kbtn" onclick="addPoint(${m.id},'${side}',-1)">−</button>
+    <span class="kpt">${flipNum('ko-'+m.id+'-'+side+'c',val)}</span>
+    <button class="kbtn" onclick="addPoint(${m.id},'${side}',1)">＋</button></div>`;
+}
+function koRow(m,side){
+  const id = side==='home' ? m.homeId : m.awayId;
+  const sw = id==null ? 0 : setsWon(m,side);
+  const win = m.status===2 && id!=null && koWinner(m)===id;
+  const nm = id==null ? '<span class="tbd">待定</span>' : teamName(id);
+  return `<div class="ko-row ${win?'win':''}"><span class="ko-nm">${nm}</span><span class="ko-sets">${flipNum('ko-'+m.id+'-'+side+'s',sw)}</span></div>`;
+}
+function koNode(id){
+  const m=koOf(id); const known = m.homeId!=null && m.awayId!=null;
+  const cs=m.sets[m.currentSet]; const ch=cs?cs.home:0, ca=cs?cs.away:0;
+  let ctrl='';
+  if(known && m.status===0) ctrl=`<button class="btn go ko-act" onclick="startMatch(${m.id})">開始</button>`;
+  else if(m.status===1) ctrl=`<div class="ko-live">${koStepper(m,'home',ch)}${koStepper(m,'away',ca)}
+      <button class="btn fin ko-act" onclick="finishMatch(${m.id})">結束本場</button></div>`;
+  else if(m.status===2) ctrl=`<button class="btn warn ko-act" onclick="resetMatch(${m.id})">重設</button>`;
+  return `<div class="ko-match ${m.status===1?'live':''} ${m.status===2?'done':''}" data-ko="${id}">
+    <div class="ko-head">${roundCN[m.round]}${m.round==='QF'?' #'+m.slot:''}</div>
+    ${koRow(m,'home')}${koRow(m,'away')}
+    ${ctrl?`<div class="ko-ctrl">${ctrl}</div>`:''}
+  </div>`;
+}
+function champNode(){
+  const champ=koWinner(koOf(1007));
+  return `<div class="ko-match champ ${champ!=null?'done':''}" data-ko="champ">
+    <div class="ko-head">🏆 冠軍</div>
+    <div class="ko-row win"><span class="ko-nm">${champ==null?'<span class="tbd">待定</span>':teamName(champ)}</span></div>
+  </div>`;
+}
+function renderBracket(){
+  const cols=document.getElementById('bracketCols'); if(!cols) return;
+  cols.innerHTML =
+    `<div class="ko-round"><div class="ko-rlabel">八強</div><div class="ko-col">${koNode(1001)}${koNode(1002)}${koNode(1003)}${koNode(1004)}</div></div>`+
+    `<div class="ko-round"><div class="ko-rlabel">四強</div><div class="ko-col">${koNode(1005)}${koNode(1006)}</div></div>`+
+    `<div class="ko-round"><div class="ko-rlabel">冠軍戰</div><div class="ko-col">${koNode(1007)}</div></div>`+
+    `<div class="ko-round"><div class="ko-rlabel">冠軍</div><div class="ko-col">${champNode()}</div></div>`;
+  const hint=document.getElementById('bracketHint');
+  if(hint) hint.textContent = groupComplete() ? '' : '小組賽尚未全部結束，編排會以目前排名為準。';
+  if(curTab==='bracket') requestAnimationFrame(drawBracketLines);
+}
+function drawBracketLines(){
+  const cont=document.getElementById('bracketRounds'); const svg=document.getElementById('bracketLines');
+  if(!cont||!svg || cont.offsetWidth===0) return;
+  const W=cont.offsetWidth, H=cont.offsetHeight;
+  svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const cr=cont.getBoundingClientRect();
+  const pos=k=>{ const el=cont.querySelector(`[data-ko="${k}"]`); if(!el) return null;
+    const r=el.getBoundingClientRect(); return {l:r.left-cr.left, r:r.right-cr.left, midY:r.top-cr.top+r.height/2}; };
+  let d='';
+  [[1001,1002,1005],[1003,1004,1006],[1005,1006,1007]].forEach(([c1,c2,p])=>{
+    const pp=pos(p); if(!pp) return;
+    [c1,c2].forEach(c=>{ const ch=pos(c); if(!ch) return;
+      const mx=(ch.r+pp.l)/2; d+=`<path d="M ${ch.r} ${ch.midY} H ${mx} V ${pp.midY} H ${pp.l}"/>`; });
+  });
+  const f=pos(1007), cp=pos('champ');
+  if(f&&cp){ const mx=(f.r+cp.l)/2; d+=`<path d="M ${f.r} ${f.midY} H ${mx} V ${cp.midY} H ${cp.l}"/>`; }
+  svg.innerHTML=d;
+}
+
 /* ============ 品牌（賽事名稱 / 會徽） ============ */
 function setBrand(key,val){ state.brand[key]=val; commit(); }
 function onLogoClick(e){ if(e.target.classList.contains('x')) return; document.getElementById('logoFile').click(); }
@@ -392,7 +600,9 @@ let curTab='scoreboard', curFilter='all';
 function switchTab(t){ curTab=t;
   document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active', el.dataset.tab===t));
   document.getElementById('view-scoreboard').classList.toggle('hidden', t!=='scoreboard');
+  document.getElementById('view-bracket').classList.toggle('hidden', t!=='bracket');
   document.getElementById('view-admin').classList.toggle('hidden', t!=='admin');
+  if(t==='bracket') requestAnimationFrame(drawBracketLines);
 }
 function setFilter(f){ curFilter=f;
   document.querySelectorAll('.filter').forEach(el=>el.classList.toggle('active', el.dataset.f===f));
@@ -401,7 +611,20 @@ function setFilter(f){ curFilter=f;
 const statusName = s => s===1?'進行中' : s===2?'已結束' : '未開始';
 const statusClass = s => s===1?'s-live' : s===2?'s-done' : 's-sched';
 
-function render(){ renderBrand(); renderLive(); renderSchedule(); if(!adminFocused()) renderAdmin(); }
+function render(){ renderBrand(); renderLive(); renderSchedule(); renderBracket(); if(!adminFocused()) renderAdmin(); applyFlips(); }
+
+/* 分數翻頁：以 JS 端對照表判斷數字是否真的變動，只有變動才播放動畫 */
+const flipPrev={};
+function flipNum(key, val){ return `<span class="flip" data-fk="${key}" data-fv="${val}"><span class="flip-val">${val}</span></span>`; }
+function applyFlips(){
+  document.querySelectorAll('.flip[data-fk]').forEach(el=>{
+    const k=el.getAttribute('data-fk'), v=el.getAttribute('data-fv');
+    if(flipPrev[k]!==undefined && flipPrev[k]!==v){
+      el.classList.remove('flip-go'); void el.offsetWidth; el.classList.add('flip-go');
+    }
+    flipPrev[k]=v;
+  });
+}
 function focusedIs(cls){ const a=document.activeElement; return a && a.classList && a.classList.contains(cls); }
 function adminFocused(){ return focusedIs('team-edit'); }
 
@@ -433,20 +656,20 @@ function renderLive(){
     const chips=m.sets.map((s,i)=>`<span class="chip">局${i+1} <b>${s.home}-${s.away}</b></span>`).join('');
     return `<div class="lcard ${m.status===1?'live':''}">
       <div class="lcard-top">
-        <span class="badge group">${m.group} 組</span>
+        <span class="badge ${m.stage==='ko'?'ko':'group'}">${labelOf(m)}</span>
         <span class="badge ${statusClass(m.status)}">${statusName(m.status)}</span>
-        <span style="margin-left:auto">${m.court} · ${m.time}</span>
+        <span style="margin-left:auto">${m.stage==='ko'?(roundCN[m.round]||'淘汰賽'):(m.court+' · '+m.time)}</span>
       </div>
       <div class="team-row">
         <div class="tname ${homeWin?'win':''}">${teamName(m.homeId)}</div>
         <div style="display:flex; align-items:center; gap:14px;">
-          <div class="tscore">${hw}</div>${m.status===1?`<div class="tscore cur">${ch}</div>`:''}
+          <div class="tscore">${flipNum('lv-'+m.id+'-hw',hw)}</div>${m.status===1?`<div class="tscore cur">${flipNum('lv-'+m.id+'-ch',ch)}</div>`:''}
         </div>
       </div>
       <div class="team-row">
         <div class="tname ${awayWin?'win':''}">${teamName(m.awayId)}</div>
         <div style="display:flex; align-items:center; gap:14px;">
-          <div class="tscore">${aw}</div>${m.status===1?`<div class="tscore cur">${ca}</div>`:''}
+          <div class="tscore">${flipNum('lv-'+m.id+'-aw',aw)}</div>${m.status===1?`<div class="tscore cur">${flipNum('lv-'+m.id+'-ca',ca)}</div>`:''}
         </div>
       </div>
       ${m.sets.length?`<div class="sets-chips">${chips}</div>`:''}
@@ -456,9 +679,10 @@ function renderLive(){
 
 function renderSchedule(){
   const box=document.getElementById('schedule');
-  const groups=[...new Set(state.matches.map(m=>m.group))];
+  const gm=state.matches.filter(m=>m.stage!=='ko');
+  const groups=[...new Set(gm.map(m=>m.group))];
   box.innerHTML = groups.map(g=>{
-    const ms=state.matches.filter(m=>m.group===g);
+    const ms=gm.filter(m=>m.group===g);
     const cards=ms.map(m=>{
       const hw=setsWon(m,'home'), aw=setsWon(m,'away');
       const score = m.status===0 ? `<span class="meta">${m.time}</span>` : `<span class="mini-score">${hw} - ${aw}</span>`;
@@ -475,7 +699,7 @@ function renderSchedule(){
 
 function renderAdmin(){
   const box=document.getElementById('admin');
-  let ms=state.matches;
+  let ms=state.matches.filter(m=>m.stage!=='ko');
   if(curFilter==='live') ms=ms.filter(m=>m.status===1);
   else if(curFilter==='sched') ms=ms.filter(m=>m.status===0);
   else if(curFilter==='done') ms=ms.filter(m=>m.status===2);
@@ -487,7 +711,7 @@ function renderAdmin(){
     const chips=m.sets.map((s,i)=>`<span class="chip">局${i+1} <b>${s.home}-${s.away}</b>${s.finished?' ✓':''}</span>`).join('');
     const stepper=(side,val)=>`<div class="stepper">
         <button class="sbtn minus" ${live?'':'disabled'} onclick="addPoint(${m.id},'${side}',-1)">−</button>
-        <div class="snum">${val}</div>
+        <div class="snum">${flipNum('ad-'+m.id+'-'+side+'c',val)}</div>
         <button class="sbtn" ${live?'':'disabled'} onclick="addPoint(${m.id},'${side}',1)">＋</button></div>`;
     let actions='';
     if(m.status===0) actions=`<button class="btn go" onclick="startMatch(${m.id})">開始比賽</button>`;
@@ -502,11 +726,11 @@ function renderAdmin(){
       </div>
       <div class="side">
         <div class="nm"><input class="team-edit" value="${teamName(m.homeId).replace(/"/g,'&quot;')}" onchange="renameTeam(${m.homeId}, this.value)"></div>
-        <div class="snum" style="color:var(--muted); font-size:18px; min-width:24px">${hw}</div>${stepper('home',ch)}
+        <div class="snum" style="color:var(--muted); font-size:18px; min-width:24px">${flipNum('ad-'+m.id+'-hw',hw)}</div>${stepper('home',ch)}
       </div>
       <div class="side">
         <div class="nm"><input class="team-edit" value="${teamName(m.awayId).replace(/"/g,'&quot;')}" onchange="renameTeam(${m.awayId}, this.value)"></div>
-        <div class="snum" style="color:var(--muted); font-size:18px; min-width:24px">${aw}</div>${stepper('away',ca)}
+        <div class="snum" style="color:var(--muted); font-size:18px; min-width:24px">${flipNum('ad-'+m.id+'-aw',aw)}</div>${stepper('away',ca)}
       </div>
       ${m.sets.length?`<div class="sets-chips">${chips}</div>`:''}
       <div class="acard-actions">${actions}</div>
@@ -544,6 +768,7 @@ function applyBoardMode(){
   if(on) curTab='scoreboard';
 }
 window.addEventListener('hashchange', applyBoardMode);
+window.addEventListener('resize', ()=>{ if(curTab==='bracket') drawBracketLines(); });
 
 /* ============ 啟動 ============ */
 applyBoardMode();
