@@ -194,20 +194,33 @@ body::before{
 .kbtn:hover{border-color:var(--jci); color:var(--jci);}
 .kpt{font-family:'Oswald',sans-serif; font-weight:700; font-size:20px; min-width:30px; text-align:center;}
 
-/* ---------- 分數翻頁特效 ---------- */
-.flip{ display:inline-block; perspective:360px; }
-.flip>.flip-val{ display:inline-block; transform-origin:50% 50%; backface-visibility:hidden; }
-.flip.flip-go>.flip-val{ animation:flipNum .46s cubic-bezier(.2,.66,.3,1); }
-@keyframes flipNum{
-  0%{ transform:rotateX(0deg); }
-  49%{ transform:rotateX(-90deg); opacity:.25; }
-  50%{ transform:rotateX(90deg); opacity:.25; }
-  100%{ transform:rotateX(0deg); opacity:1; }
+/* ---------- 分數翻牌（上下分離）特效 ---------- */
+.flap{
+  display:inline-block; position:relative; vertical-align:baseline;
+  font-variant-numeric:tabular-nums; line-height:1.25; perspective:8em;
+  --fh:1.25em; --fhalf:.625em;
 }
-/* 即時比數的大分數加上翻牌卡片質感 */
-.tscore .flip{ position:relative; }
-.tscore.cur .flip-val{ padding:0 2px; }
-@media (prefers-reduced-motion: reduce){ .flip.flip-go>.flip-val{ animation:none; } }
+.flap .sizer{ visibility:hidden; padding:0 .2em; }
+.flap .digit, .flap .leaf{
+  position:absolute; left:0; right:0; height:var(--fhalf); overflow:hidden;
+  box-shadow:inset 0 0 .05em rgba(255,255,255,.05);
+}
+.flap .digit > span, .flap .leaf > span{
+  display:block; height:var(--fh); line-height:var(--fh); text-align:center;
+}
+.flap .digit.upper, .flap .leaf.top{ top:0; border-radius:.14em .14em 0 0;
+  background:linear-gradient(180deg,#12273f,#0c1d31); border-bottom:1px solid rgba(0,0,0,.55); }
+.flap .digit.lower, .flap .leaf.bottom{ bottom:0; border-radius:0 0 .14em .14em;
+  background:linear-gradient(180deg,#0a1828,#06101d); }
+.flap .digit.lower > span, .flap .leaf.bottom > span{ margin-top:calc(var(--fhalf) * -1); }
+.flap .leaf{ backface-visibility:hidden; z-index:2; }
+.flap .leaf.top{ transform-origin:center bottom; transform:rotateX(0deg); }
+.flap .leaf.bottom{ transform-origin:center top; transform:rotateX(90deg); }
+.flap.go .leaf.top{ animation:flapTop .5s cubic-bezier(.36,0,.66,-.06) forwards; }
+.flap.go .leaf.bottom{ animation:flapBottom .42s cubic-bezier(.2,.62,.3,1) forwards; animation-delay:.28s; }
+@keyframes flapTop{ to{ transform:rotateX(-90deg); } }
+@keyframes flapBottom{ from{ transform:rotateX(90deg); } to{ transform:rotateX(0deg); } }
+@media (prefers-reduced-motion: reduce){ .flap.go .leaf.top, .flap.go .leaf.bottom{ animation:none; } }
 @media(max-width:520px){ .cols{gap:30px;} .ko-round{min-width:168px;} }
 
 /* 大螢幕模式 */
@@ -613,14 +626,28 @@ const statusClass = s => s===1?'s-live' : s===2?'s-done' : 's-sched';
 
 function render(){ renderBrand(); renderLive(); renderSchedule(); renderBracket(); if(!adminFocused()) renderAdmin(); applyFlips(); }
 
-/* 分數翻頁：以 JS 端對照表判斷數字是否真的變動，只有變動才播放動畫 */
+/* 分數翻牌（上下分離）：每格輸出四片骨架，渲染後比對舊值，只有變動才驅動翻牌 */
 const flipPrev={};
-function flipNum(key, val){ return `<span class="flip" data-fk="${key}" data-fv="${val}"><span class="flip-val">${val}</span></span>`; }
+const flapReduce = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function flipNum(key, val){
+  return `<span class="flap" data-fk="${key}" data-fv="${val}">`+
+    `<span class="sizer">${val}</span>`+
+    `<span class="digit upper"><span>${val}</span></span>`+
+    `<span class="digit lower"><span>${val}</span></span>`+
+    `<span class="leaf top"><span>${val}</span></span>`+
+    `<span class="leaf bottom"><span>${val}</span></span>`+
+  `</span>`;
+}
 function applyFlips(){
-  document.querySelectorAll('.flip[data-fk]').forEach(el=>{
-    const k=el.getAttribute('data-fk'), v=el.getAttribute('data-fv');
-    if(flipPrev[k]!==undefined && flipPrev[k]!==v){
-      el.classList.remove('flip-go'); void el.offsetWidth; el.classList.add('flip-go');
+  document.querySelectorAll('.flap[data-fk]').forEach(el=>{
+    const k=el.getAttribute('data-fk'), v=el.getAttribute('data-fv'), prev=flipPrev[k];
+    if(prev!==undefined && prev!==v && !flapReduce){
+      // 上半靜態=新值（翻完留下的頂）；下半靜態=舊值（被新葉片蓋住前可見）
+      el.querySelector('.digit.upper > span').textContent=v;
+      el.querySelector('.digit.lower > span').textContent=prev;
+      el.querySelector('.leaf.top > span').textContent=prev;   // 舊頂往下折
+      el.querySelector('.leaf.bottom > span').textContent=v;    // 新底往上蓋
+      el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
     }
     flipPrev[k]=v;
   });
