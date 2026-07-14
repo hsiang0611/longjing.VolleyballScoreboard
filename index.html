@@ -641,7 +641,7 @@ body.readonly .site-footer .cr-holder{pointer-events:none; border-color:transpar
     </div>
     <p class="hint">
       四組各取前兩名共 8 隊進入八強，交叉編排（A1–B2、C1–D2、B1–A2、D1–C2）。
-      每場勝隊自動晉級下一輪。淘汰賽同樣是五局三勝，可直接在節點上開始、加減分、結束。
+      每場勝隊自動晉級下一輪。淘汰賽同樣是三局兩勝，可直接在節點上開始、加減分、結束。
       排名依「勝場 → 局數差 → 得分差」計算，建議小組賽全部打完再按「自動編排」。
     </p>
   </section>
@@ -656,7 +656,7 @@ body.readonly .site-footer .cr-holder{pointer-events:none; border-color:transpar
     </div>
     <div id="admin" class="admin-grid"></div>
     <p class="hint">
-      點「開始」後即可加減分。第 1–4 局 25 分、決勝局（第 5 局）15 分，皆需淨勝 2 分；
+      點「開始」後即可加減分。三局兩勝：第 1–2 局 25 分、決勝局（第 3 局）15 分，皆需淨勝 2 分；
       系統會自動判定該局結束、自動換局、整場勝負。隊名、賽事名稱與副標都可直接點擊修改，會徽可從右上角上傳。<br>
       所有資料自動存在這台電腦的瀏覽器，重開不會遺失；要備份或換電腦請用「匯出 JSON」。
     </p>
@@ -758,8 +758,8 @@ body.readonly .site-footer .cr-holder{pointer-events:none; border-color:transpar
 <script>
 /* ============ 設定 ============ */
 const STORAGE_KEY = 'vb_jci_tournament_v1';
-const APP_VERSION = 'v1.2 · 2026-07-14';
-const RULES = { setsToWin:3, regular:25, deciding:15, margin:2 };
+const APP_VERSION = 'v1.1 · 2026-06-05';
+const RULES = { setsToWin:2, regular:25, deciding:15, margin:2 };  // 三局兩勝；1、2 局 25 分，決勝第 3 局 15 分，淨勝 2 分
 const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('vb_jci_scoreboard') : null;
 
 /* ====== Firebase 雲端即時同步設定 ======
