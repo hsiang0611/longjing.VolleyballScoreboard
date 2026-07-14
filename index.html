@@ -84,6 +84,15 @@ body::before{
   font-family:'Oswald',sans-serif; font-weight:700; font-size:13px; color:var(--muted); vertical-align:middle;}
 .tlogo img{width:100%; height:100%; object-fit:cover;}
 .tlogo.tlogo-c{font-weight:800; box-shadow:0 1px 4px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.14);}
+/* 前兩字：縮小字級、收緊間距，讓兩個中文字在圓圈內排得下 */
+.tlogo.tlogo-2{font-size:11px; letter-spacing:-.06em; line-height:1;}
+.tlogo.sm.tlogo-2{font-size:9px;}
+.tlogo.lg.tlogo-2{font-size:15px;}
+body.board-mode .tlogo.lg.tlogo-2{font-size:20px;}
+body.board-mode .board-live.n1 .tlogo.lg.tlogo-2{font-size:30px;}
+body.board-mode .board-live.n2 .tlogo.lg.tlogo-2{font-size:24px;}
+body.board-single .tlogo.lg.tlogo-2{font-size:32px;}
+@media(max-width:600px){ .tlogo.lg.tlogo-2{font-size:12px;} }
 .tlogo.lg{width:40px; height:40px; font-size:18px;}
 .tlogo.sm{width:22px; height:22px; font-size:11px;}
 .team-row .tname, .scard .vs-team{display:inline-flex; align-items:center; gap:9px;}
@@ -972,22 +981,23 @@ const teamName = id => { const t=state.teams.find(x=>x.id===id); return t? t.nam
 // 將任何文字轉義為安全的 HTML 純文字（隊名等使用者輸入都經過這裡，避免特殊符號破壞版面或注入內容）
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 const teamNameHTML = id => esc(teamName(id));
-// 隊徽顯示空間：有隊徽顯示圖片，否則顯示隊名首字佔位。size: 'sm' | '' | 'lg'
-// 各組代表色（無隊徽時，首字圓標填該組色）
+// 隊徽顯示空間：有隊徽顯示圖片，否則顯示隊名前兩字佔位。size: 'sm' | '' | 'lg'
+// 各組代表色（無隊徽時，前兩字圓標填該組色）
 const GROUP_COLORS = { A:{bg:'#009CDE',fg:'#ffffff'}, B:{bg:'#ffc83d',fg:'#3a2a00'},
                        C:{bg:'#1fae74',fg:'#ffffff'}, D:{bg:'#ff3b5c',fg:'#ffffff'} };
 function teamLogo(id, size){
   const t = id==null ? null : state.teams.find(x=>x.id===id);
   const cls = 'tlogo' + (size?(' '+size):'');
-  const ini = esc((t && t.name) ? t.name.trim().charAt(0) : '?');
+  const label = esc((t && t.name) ? t.name.trim().slice(0,2) : '?');
+  const two = label.length>1 ? ' tlogo-2' : '';
   if(t && t.logo){
     const url=esc(t.logo);
-    // 圖片載入失敗時自動退回顯示首字
-    return `<span class="${cls}"><img src="${url}" alt="" onerror="var p=this.parentNode;p.textContent=this.getAttribute('data-ini');" data-ini="${ini}"></span>`;
+    // 圖片載入失敗時自動退回顯示前兩字
+    return `<span class="${cls}${two}"><img src="${url}" alt="" onerror="var p=this.parentNode;p.textContent=this.getAttribute('data-ini');" data-ini="${label}"></span>`;
   }
   const gc = (t && GROUP_COLORS[t.group]) || null;
   const style = gc ? ` style="background:${gc.bg};color:${gc.fg};border-color:transparent"` : '';
-  return `<span class="${cls} tlogo-c"${style}>${ini}</span>`;
+  return `<span class="${cls}${two} tlogo-c"${style}>${label}</span>`;
 }
 const setsWon = (m,side) => m.sets.filter(s=>s.finished && (side==='home'? s.home>s.away : s.away>s.home)).length;
 // 偵測賽末點/局末點：回傳 {type:'match'|'set', side:'home'|'away'} 或 null（雙方同時則回傳領先方；24-24 之類不算）
